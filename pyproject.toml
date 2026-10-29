@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pc-optimize"
+version = "0.1.0"
+description = "Hardware-aware PC game optimization prototype: profile, benchmark, test supported settings, verify, roll back."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+[project.scripts]
+pc-optimize = "optimize.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "PLW"]
+ignore = [
+  "PLR2004",           # magic comparison values are fine in tests/thresholds
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["PLC0415"]  # local imports inside test functions are intentional

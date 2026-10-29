@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# Tool runtime data (local profiles, backups, audit logs)
+.pc-optimize/
+*.db
+*.sqlite3

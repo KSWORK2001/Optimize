@@ -414,6 +414,44 @@ Do not claim success from a single benchmark run. Use repeated runs, consistent 
 
 It should identify the machine, capture a baseline, change one safe setting, capture a second run, compare the results, and restore the original setting. This validates the hardest assumptions before investing in a broad optimization engine.
 
+## Implementation status (Milestone 1 prototype)
+
+A working benchmark-and-rollback prototype lives in `src/optimize/` (Python 3.10+, standard library only; SQLite via `sqlite3`). It implements the full loop against a **synthetic game** ("Aurora Plains") with deterministic simulated telemetry, so the pipeline — profiling, backup, baseline, bounded candidate trials, verdicts, rollback — runs and is tested on any OS and in CI. Windows-specific integrations are implemented behind the same interfaces and require validation on a real machine (Phase 0 exit criterion).
+
+| README module | Status |
+|---|---|
+| Hardware profiler | `WindowsProfiler` (PowerShell/CIM, read-only, no admin) + `SimulatedProfiler` fallback; VRAM >4 GB wraparound detected and reported as unknown |
+| Telemetry / metrics | `compute_metrics` (avg FPS, documented 1% low, p99, spikes, consistency), `compare_runs` (within-group variance; gains inside the noise band are inconclusive), raw frame times retained |
+| Benchmark collectors | `SimulatedCollector` (deterministic, bottleneck-aware model) and `PresentMonCollector` (CSV wrapper — **validate CLI flags on a target Windows machine before use**) |
+| Game adapter layer | `GameAdapter`/`ConfigFileAdapter` base classes + synthetic adapter; catalog-validated values only, atomic writes, per-game backups with SHA-256 manifests, JSONL audit log, one-click restore |
+| Optimization engine | Bottleneck estimate → ranked single-setting candidates → bounded trials (keep/reject/inconclusive) → one combined trial of winners → per-goal weighted scoring with quality-floor hard constraint; stops at budget, target, or no gains |
+| Profile database | Local SQLite (`~/.pc-optimize/profiles.db`): sessions, per-trial verdicts, and raw frame-time samples per run |
+| Reports & profiles | `report` renders a self-contained HTML report (metric cards, trial verdicts, SVG frame-time charts) from any stored session; `export`/`apply-config` move a configuration as validated JSON — catalog-checked, backed up before applying |
+| Game-update safety | Config keys absent from the adapter catalog are detected as drift, warned about, and never touched |
+
+Quick start:
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
+
+.venv/bin/python -m optimize demo          # full loop, restores original by default
+.venv/bin/python -m optimize demo --apply  # keep the winning configuration
+.venv/bin/python -m optimize restore --game aurora-plains   # one-click rollback
+.venv/bin/python -m optimize benchmark --runs 3             # baseline + variance
+.venv/bin/python -m optimize report                         # HTML report, latest session
+.venv/bin/python -m optimize export                         # portable JSON profile
+.venv/bin/python -m optimize apply-config --file <profile.json>
+.venv/bin/python -m optimize history
+.venv/bin/python -m pytest                 # 84 tests
+.venv/bin/ruff check src tests             # lint (configured in pyproject.toml)
+```
+
+Safety properties enforced in code: every candidate is validated against the game's catalog before writing; writes are atomic (`tmp` + rename); every session starts from a verified backup; trials always restore the baseline; nothing is applied without an explicit `--apply`; every change is appended to `audit.jsonl`.
+
+Not yet done (next steps, in order): pick and verify a real game + PresentMon on Windows (Phase 0), wire `PresentMonCollector` into the CLI for that adapter, repeat baseline-variance calibration on real hardware, then the desktop UI (Phase 3).
+
+Everything above runs identically on macOS, Linux, and Windows: all Windows-only behavior (CIM hardware queries, PresentMon capture) sits behind interfaces with portable unit tests covering their parsing and failure modes.
+
 ## References
 
 Verify the current documentation, versions, licensing, and supported APIs before implementation.
