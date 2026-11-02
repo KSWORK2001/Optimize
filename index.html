@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optimize — console consistency for the PC you already own</title>
+<meta name="description" content="Optimize is a hardware-aware PC game optimization engine: profile your Windows gaming PC, benchmark a game, change only supported settings, verify, roll back. Open source.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+<style>
+:root {
+  --bg: #14110d; --panel: #1d1812; --raised: #272117; --border: #322a1f;
+  --text: #ede5d8; --muted: #a3988a; --green: #7fb069; --green-bright: #94c283;
+  --red: #d96459;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; overflow-x: hidden; }
+a { color: inherit; text-decoration: none; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dim { color: var(--muted); }
+
+nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px); background: rgba(20,17,13,.85); border-bottom: 1px solid var(--border); }
+nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+.brand { display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 17px; }
+.brand .logo { width: 28px; height: 28px; background: var(--raised); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+nav .links { display: flex; gap: 26px; font-size: 14.5px; color: var(--muted); }
+nav .links a:hover { color: var(--text); }
+@media (max-width: 760px) { nav .links { display: none; } }
+
+.hero { padding: 88px 0 64px; display: grid; grid-template-columns: 1.05fr .95fr; gap: 48px; align-items: center; }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; padding-top: 56px; } }
+h1 { font-size: 44px; line-height: 1.12; letter-spacing: -.02em; margin: 18px 0 14px; }
+.tagline { font-size: 18px; color: var(--muted); margin-bottom: 14px; }
+.kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--green); background: rgba(127,176,105,.1); border: 1px solid rgba(127,176,105,.35); padding: 6px 12px; border-radius: 999px; }
+.sub { font-size: 16px; color: var(--muted); margin-bottom: 28px; max-width: 52ch; }
+.cta-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.btn { display: inline-block; padding: 12px 22px; border-radius: 12px; font-weight: 600; font-size: 15px; transition: transform .15s, background .15s; }
+.btn:hover { transform: translateY(-1px); }
+.btn.primary { background: var(--green); color: #14110d; }
+.btn.primary:hover { background: var(--green-bright); }
+.btn.ghost { border: 1px solid var(--border); color: var(--text); }
+.btn.ghost:hover { border-color: #4a4032; }
+.ver { font-size: 13px; color: var(--muted); }
+.ver b { color: var(--green); }
+
+/* terminal / benchmark mock */
+.appmock { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+.appmock .tbar { display: flex; gap: 6px; align-items: center; padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+.appmock .tbar i { width: 10px; height: 10px; border-radius: 50%; background: #3a322a; }
+.appmock .tbar .up { margin-left: auto; color: var(--green); font-size: 11px; border: 1px solid rgba(127,176,105,.4); padding: 2px 8px; border-radius: 999px; }
+.appmock .term { padding: 18px 20px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 2; min-height: 330px; }
+.appmock .term .ln { white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+.appmock .term .p { color: var(--green); font-weight: 600; }
+.appmock .term .ok { color: var(--green); font-weight: 700; }
+
+section { padding: 72px 0; border-top: 1px solid var(--border); }
+h2 { font-size: 30px; letter-spacing: -.01em; margin-bottom: 10px; }
+.lead { color: var(--muted); font-size: 16.5px; max-width: 62ch; margin-bottom: 36px; }
+
+/* features */
+.grid { display: grid; gap: 16px; }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .g3 { grid-template-columns: 1fr; } }
+.g2 { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 760px) { .g2 { grid-template-columns: 1fr; } }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 26px; transition: border-color .15s; }
+.card:hover { border-color: #4a4032; }
+.card .ico { font-size: 26px; margin-bottom: 14px; }
+.card h3 { font-size: 17.5px; margin-bottom: 8px; }
+.card p { font-size: 14.5px; color: var(--muted); }
+.uniq { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 8px 26px; margin-top: 32px; }
+.uniq li { list-style: none; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 15px; display: flex; gap: 12px; }
+.uniq li:last-child { border-bottom: none; }
+.uniq .n { color: var(--green); font-family: ui-monospace, Menlo, monospace; font-size: 13px; padding-top: 2px; }
+
+/* status / roadmap */
+.news { display: grid; gap: 10px; }
+.news .item { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; display: grid; grid-template-columns: 110px 1fr; gap: 16px; font-size: 14.5px; }
+@media (max-width: 640px) { .news .item { grid-template-columns: 1fr; gap: 4px; } }
+.news .v { color: var(--green); font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+.src { font-size: 12.5px; color: var(--muted); margin-top: 18px; }
+
+/* download */
+#download .inst { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; margin: 26px 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+#download code { font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--green); }
+.copy { background: var(--raised); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; }
+.copy:hover { border-color: #4a4032; }
+.copy.done { border-color: var(--green); color: var(--green); }
+.note { font-size: 13.5px; color: var(--muted); margin-top: 14px; }
+
+footer { border-top: 1px solid var(--border); padding: 34px 0 44px; color: var(--muted); font-size: 13.5px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#"><span class="logo">🎮</span> Optimize</a>
+    <div class="links">
+      <a href="#loop">The loop</a>
+      <a href="#principles">Principles</a>
+      <a href="#status">Status</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/KSWORK2001/Optimize" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div>
+    <span class="kicker">Windows · PC gaming · open source</span>
+    <h1>Console consistency,<br>on the hardware you already own.</h1>
+    <p class="tagline">A hardware-aware optimization engine: profile, benchmark, change only what's supported, verify, roll back.</p>
+    <p class="sub">Consoles feel consistent because developers target one known configuration. PCs vary endlessly — CPU, GPU, drivers, memory, display modes. Optimize automates the loop PC players do by hand: measure first, change only supported settings reversibly, then benchmark again. It never promises console-level performance or a fixed FPS gain.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="https://github.com/KSWORK2001/Optimize" target="_blank" rel="noopener">View on GitHub</a>
+      <a class="btn ghost" href="#loop">The loop</a>
+      <span class="ver">latest: <b id="ver">…</b></span>
+    </div>
+  </div>
+
+  <div class="appmock" aria-hidden="true">
+    <div class="tbar"><i></i><i></i><i></i>&nbsp;&nbsp;optimize — aurora plains<span class="up">+22% verified</span></div>
+    <div class="term">
+      <div class="ln"><span class="p">$</span> optimize profile</div>
+      <div class="ln dim">  cpu   Ryzen 5 7600 · 12 threads     ram   32 GB</div>
+      <div class="ln dim">  gpu   RTX 4060 · 8 GB · 566.36      disp  1440p @ 165 Hz</div>
+      <div class="ln"><span class="p">$</span> optimize benchmark --runs 3</div>
+      <div class="ln dim">  baseline   61.4 fps avg · 1% low 38.2 · ±1.1% var</div>
+      <div class="ln"><span class="p">$</span> optimize demo --apply</div>
+      <div class="ln dim">  backup     settings.ini → sha-256 verified</div>
+      <div class="ln">  shadows: high → medium          keep   +9.2%</div>
+      <div class="ln">  upscaling: quality → balanced   keep   +6.1%</div>
+      <div class="ln">  reflections: ultra → high       reject · quality floor</div>
+      <div class="ln">  verify     74.9 fps avg · 1% low 51.7 · +22%</div>
+      <div class="ln ok">  PASS — gain beats run variance · config kept</div>
+    </div>
+  </div>
+</header>
+
+<section id="loop">
+  <div class="wrap">
+    <h2>Measure, change, verify — in a closed loop.</h2>
+    <p class="lead">No registry magic and no guesswork. Every pass is bounded, catalog-checked, and reversible, and the loop stops at the target, the test budget, or the point where gains become negligible.</p>
+    <ul class="uniq">
+      <li><span class="n">01</span><span><b>Profile the PC.</b> Read-only detection of CPU, GPU, VRAM, RAM, display, and driver version through supported OS and vendor interfaces — no admin rights, no assumptions.</span></li>
+      <li><span class="n">02</span><span><b>Benchmark the game.</b> Repeatable baseline runs capture average FPS, 1% lows, and raw frame times — with run-to-run variance reported, not hidden.</span></li>
+      <li><span class="n">03</span><span><b>Search supported settings.</b> Estimate the likely bottleneck, then test a bounded set of candidates drawn only from the game's documented settings catalog — one change at a time.</span></li>
+      <li><span class="n">04</span><span><b>Apply reversibly.</b> Validated values, atomic writes, and a verified backup taken before anything changes; every change lands in an audit log.</span></li>
+      <li><span class="n">05</span><span><b>Verify &amp; roll back if not better.</b> Re-benchmark under the same conditions. Keep improvements that beat benchmark variance; restore the exact original configuration otherwise.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="principles">
+  <div class="wrap">
+    <h2>Principles before performance.</h2>
+    <p class="lead">The project principle, straight from the README: measure before changing anything; apply only supported, reversible changes, then benchmark again. Never promise console-level performance or a fixed FPS gain.</p>
+    <div class="grid g2">
+      <div class="card"><div class="ico">📏</div><h3>Measure first</h3><p>Nothing changes until there's a baseline. Recommendations are validated by measurement, and gains inside run-to-run variance are reported as inconclusive — not as wins.</p></div>
+      <div class="card"><div class="ico">🧩</div><h3>Supported changes only</h3><p>Only settings a game's adapter catalog documents, with validated values. No binary edits, no memory patching, no anti-cheat interference, no overclocks, no undocumented registry tweaks.</p></div>
+      <div class="card"><div class="ico">↩️</div><h3>Reversible by default</h3><p>Every session starts from a verified backup, writes are atomic, and one command restores the exact original configuration — rollback is built in, not bolted on.</p></div>
+      <div class="card"><div class="ico">🎯</div><h3>No magic numbers</h3><p>No promised FPS gains and no console guarantees. Results depend on the game, hardware, driver, and benchmark conditions — the tool reports uncertainty instead of hiding it.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="status">
+  <div class="wrap">
+    <h2>Where it honestly stands.</h2>
+    <p class="lead">v0.1.0 is a Milestone 1 prototype: the full loop — profile, backup, baseline, bounded candidate trials, verdicts, rollback — runs end to end and is tested in CI (84 tests) against a synthetic game, with the Windows-specific collectors behind the same interfaces awaiting validation on real hardware.</p>
+    <div class="news">
+      <div class="item"><span class="v">v0.1.0</span><span><b>Milestone 1 prototype.</b> Benchmark-and-rollback works against a synthetic game: local SQLite profile database, HTML reports, JSONL audit log, one-click restore.</span></div>
+      <div class="item"><span class="v">Phase 0</span><span><b>Feasibility spike.</b> Pick one real game with a repeatable benchmark; validate telemetry capture and safe, restorable settings on real Windows machines.</span></div>
+      <div class="item"><span class="v">Phase 1</span><span><b>Instrumentation prototype.</b> Hardware detection, frame-time capture, saved metadata, average-FPS / 1%-low charts, run-to-run variance checks.</span></div>
+      <div class="item"><span class="v">Phase 2</span><span><b>One-game optimizer.</b> The first real game adapter, safe-settings validation, a small candidate set, rejected crashes and regressions, a verified improvement.</span></div>
+      <div class="item"><span class="v">Phase 3</span><span><b>Desktop UX.</b> Game selection, target profiles, a preview of planned changes, and explicit Apply / Re-test / Restore controls.</span></div>
+      <div class="item"><span class="v">Phase 4</span><span><b>More games and hardware.</b> Adapters one game at a time; AMD and Intel tuning where interfaces allow; profile import/export; opt-in community profiles.</span></div>
+      <div class="item"><span class="v">Phase 5</span><span><b>Smarter optimization.</b> Sample-efficient search and AI-generated explanations — with every change still validated by deterministic code.</span></div>
+    </div>
+    <p class="src">The MVP scope is deliberately narrow: Windows desktop, one supported game, NVIDIA GPUs first, read-only hardware detection, a short documented list of safe settings, manual benchmark fallback, backup and rollback. The full plan lives in <a href="https://github.com/KSWORK2001/Optimize/blob/main/README.md" target="_blank" rel="noopener">the README</a>.</p>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <h2>Get Optimize.</h2>
+    <p class="lead">A Python package — 3.10+, standard library only — installed from source while it's a prototype. The first target is Windows; the loop itself runs on any OS so the pipeline stays tested in CI.</p>
+    <div class="inst">
+      <code id="cmd">git clone https://github.com/KSWORK2001/Optimize &amp;&amp; cd Optimize &amp;&amp; pip install -e .</code>
+      <button class="copy" id="copy" onclick="copyCmd()">Copy</button>
+    </div>
+    <div class="cta-row">
+      <a class="btn ghost" href="https://github.com/KSWORK2001/Optimize/releases" target="_blank" rel="noopener">Releases</a>
+    </div>
+    <p class="note">Then run the loop: <span class="mono">python -m optimize demo</span> — full loop, restores your original config by default. Add <span class="mono">--apply</span> to keep the winning configuration, or <span class="mono">python -m optimize report</span> for an HTML report of the last session.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>🎮 Optimize — a PC game optimization engine. Measure, change only what's supported, verify.</span>
+    <span><a href="https://github.com/KSWORK2001/Optimize" target="_blank" rel="noopener">GitHub</a> · <a href="https://github.com/KSWORK2001/Optimize/releases" target="_blank" rel="noopener">Releases</a> · <a href="index.html">Website</a></span>
+  </div>
+</footer>
+
+<script>
+async function ver() {
+  try {
+    const r = await fetch("https://api.github.com/repos/KSWORK2001/Optimize/releases/latest");
+    const j = await r.json();
+    const v = (j.tag_name || "").replace(/^v/, "");
+    if (v) {
+      document.getElementById("ver").textContent = v;
+    } else {
+      document.getElementById("ver").textContent = "see releases";
+    }
+  } catch (e) { document.getElementById("ver").textContent = "see releases"; }
+}
+function copyCmd() {
+  const b = document.getElementById("copy");
+  navigator.clipboard.writeText(document.getElementById("cmd").textContent.trim());
+  b.textContent = "Copied"; b.classList.add("done");
+  setTimeout(() => { b.textContent = "Copy"; b.classList.remove("done"); }, 1600);
+}
+ver();
+</script>
+</body>
+</html>
